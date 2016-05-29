@@ -63,7 +63,7 @@ int main()
 {
 	CLog *m_Log = CLog::GetLog("Main");
 	m_Log->SetLogLevel(3);
-	m_Log->SetConsoleLogLevel(3);
+	m_Log->SetConsoleLogLevel(4);
 
 	spi_config_t spi_config;
 	spi_config.mode=0;
@@ -117,6 +117,7 @@ int main()
 	lirc_t *data_ptr = data;
 	time_t lastReport = 0, packetStart = time(NULL);
 	bool m_bExecute=true;
+	int lastRSSI = -1000, minGoodRSSI=0;
 
 	while (m_bExecute) {
 		int result;
@@ -131,9 +132,9 @@ int main()
 			continue;
 		}
 
-		if (lastReport != time(NULL) && data_ptr != data)
+		if (lastReport != time(NULL) && data_ptr - data>=32)
 		{
-			m_Log->Printf(100,"RF got data %ld bytes. RSSI=%d", data_ptr - data, rfm.readRSSI());
+			m_Log->Printf(4,"RF got data %ld bytes. RSSI=%d", data_ptr - data, lastRSSI);
 			lastReport = time(NULL);
 		}
 
@@ -141,17 +142,23 @@ int main()
 		{
 			packetStart = time(NULL);
 		}
+		else if (data_ptr - data<32)
+		{
+
+		}
 		else if (!waitfordata(fd, 300000) || data_ptr - data>10000 || time(NULL)-packetStart>2)
 		{
 			string parsedResult = m_parser.Parse(data, data_ptr - data);
 			if (parsedResult.length())
 			{
-				m_Log->Printf(3, "RF Recieved: %s\n", parsedResult.c_str());
+				m_Log->Printf(3, "RF Recieved: %s. RSSI=%d (%d)", parsedResult.c_str(), lastRSSI, minGoodRSSI);
 				conn.NewMessage(parsedResult);
+				if (minGoodRSSI>lastRSSI)
+					minGoodRSSI=lastRSSI;
 			}
 			else
 			{
-				m_Log->Printf(10, "Recieved %ld signals. Not decoded\n", data_ptr - data);
+				m_Log->Printf(4, "Recieved %ld signals. Not decoded\n", data_ptr - data);
 			}
 			data_ptr = data;
 			packetStart = time(NULL);
@@ -162,6 +169,7 @@ int main()
 			fprintf(stderr, "read() failed\n");
 			break;
 		}
+		lastRSSI = rfm.readRSSI();
 
 		data_ptr += result / sizeof(lirc_t);
 	};
