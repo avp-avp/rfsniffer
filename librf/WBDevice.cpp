@@ -14,7 +14,6 @@ const char *g_Topics[] =
 	"temperature",
 	"rel_humidity",
 	"",
-	"",
 };
 
 CWBDevice::CWBDevice()
@@ -34,7 +33,6 @@ CWBDevice::~CWBDevice()
 	for_each(CControlMap, m_Controls, i)
 		delete i->second;
 }
-
 
 #ifdef USE_CONFIG
 void CWBDevice::Init(CConfigItem config)
