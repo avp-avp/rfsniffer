@@ -4,9 +4,7 @@
 Для сборки требуется Docker контейнер из http://contactless.ru/wiki/index.php/%D0%9A%D0%B0%D0%BA_%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%B0%D1%82%D1%8B%D0%B2%D0%B0%D1%82%D1%8C_%D0%9F%D0%9E_%D0%B4%D0%BB%D1%8F_Wiren_Board
 
 Сборка:
-autoreconf -fvi
-./configure
-make
+autoreconf -fvi && ./configure && make
 
 В результате получается 4 нужных файла:
 libutils.so.0 (libutils/.libs/libutils.so.0)
