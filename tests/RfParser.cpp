@@ -12,11 +12,15 @@
 
 string DecodeFile(const char *File)
 {
-	CRFParser parser;
-	parser.AddProtocol(new CRFProtocolRST());
-	parser.AddProtocol(new CRFProtocolLivolo());
-	parser.AddProtocol(new CRFProtocolX10());
-	parser.AddProtocol(new CRFProtocolRaex());
+	CLog *log = CLog::GetLog("Main");
+	CRFParser parser(log);
+	//parser.EnableAnalyzer();
+
+	//parser.AddProtocol(new CRFProtocolRST());
+	//parser.AddProtocol(new CRFProtocolLivolo());
+	//parser.AddProtocol(new CRFProtocolX10());
+	//parser.AddProtocol(new CRFProtocolRaex());
+	parser.AddProtocol("All");
 
 	FILE *f = fopen(File, "rb");
 	if (!f)
@@ -37,7 +41,12 @@ typedef pstr_pair *ppstr_pair;
 
 
 static const pstr_pair Tests[] = {
-	/*
+	{ "capture-0906-165011.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
+	{ "capture-0706-164649.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
+	{ "capture-0706-211823.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
+	
+	
+	//*
 	{ "capture-1303-212826.rcf", "X10:D2ON" },
 	{ "capture-1303-204025.rcf", "X10:D2ON" },
 	{ "capture-2902-213735.rcf", "X10:D2ON" },

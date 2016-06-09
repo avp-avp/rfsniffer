@@ -59,8 +59,15 @@ int waitfordata(int fd, unsigned long maxusec)
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
+	bool bDebug = false;
+
+	if (argc>=2 && !strcmp(argv[1], "-D"))
+	{
+		bDebug = true;
+	}
+
 	CLog *m_Log = CLog::GetLog("Main");
 	m_Log->SetLogLevel(3);
 	m_Log->SetConsoleLogLevel(4);
@@ -106,11 +113,8 @@ int main()
 		throw CHaException(CHaException::ErrBadParam,"This program is only intended for receivers supporting the pulse/space layer.");
 	}
 
-	CRFParser m_parser;
-	m_parser.AddProtocol(new CRFProtocolRST());
-	m_parser.AddProtocol(new CRFProtocolLivolo());
-	m_parser.AddProtocol(new CRFProtocolX10());
-	m_parser.AddProtocol(new CRFProtocolRaex());
+	CRFParser m_parser(m_Log, bDebug?".":"");
+	m_parser.AddProtocol("All");
 
 	const size_t BUFFER_SIZE = 1024 * 1024;
 	lirc_t *data = new lirc_t[BUFFER_SIZE];

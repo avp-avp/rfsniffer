@@ -19,7 +19,7 @@ static range_type g_timing_pulse[8] =
 
 
 CRFProtocolRaex::CRFProtocolRaex()
-	:CRFProtocol(g_timing_pause, g_timing_pulse, 57, 2, 'A')
+	:CRFProtocol(g_timing_pause, g_timing_pulse, 57, 2, "A")
 {
 }
 
@@ -38,73 +38,3 @@ string CRFProtocolRaex::DecodePacket(const string&raw)
 }
 
 
-string CRFProtocolRaex::ManchesterDecode(const string&raw, bool expectPulse, char shortPause, char longPause, char shortPulse, char longPulse)
-{
-	enum t_state { expectStartPulse, expectStartPause, expectMiddlePulse, expectMiddlePause};
-
-	t_state state = expectPulse? expectStartPulse: expectStartPause;
-	string res;
-
-	for_each_const(string, raw, c)
-	{
-		switch (state)
-		{
-		case expectStartPulse:   // ќжидаем короткий пульс, всегда 1
-			if (*c == shortPulse)
-			{
-				res += "1";
-				state = expectMiddlePause;
-			}
-			else
-			{ 
-				return "";
-			}
-			break;
-		case expectStartPause:  // ќжидаем короткую паузу, всегда 0
-			if (*c == shortPause)
-			{
-				res += "0";
-				state = expectMiddlePulse;
-			}
-			else
-			{
-				return "";
-			}
-			break;
-		case expectMiddlePulse:  // ќжидаем пульс. ≈сли короткий - пара закончилась, ждем короткую стартовую паузу. ≈сли длинный, получили начало след пары и ждем среднюю паузу
-			if (*c == shortPulse)
-			{
-				state = expectStartPause;
-			}
-			else if (*c == longPulse)
-			{
-				state = expectMiddlePause;
-				res += "1";
-			}
-			else
-			{
-				return "";
-			}
-			break;
-		case expectMiddlePause:  // ќжидаем паузу. ≈сли коротка€ - пара закончилась, ждем короткую стартовый пульс. ≈сли длинна€, получили начало след пары и ждем средний пульс
-			if (*c == shortPause)
-			{
-				state = expectStartPulse;
-			}
-			else if (*c == longPause)
-			{
-				state = expectMiddlePulse;
-				res += "0";
-			}
-			else
-			{
-				return "";
-			}
-			break;
-		default:
-			return "";
-		}
-	}
-
-	return res;
-}

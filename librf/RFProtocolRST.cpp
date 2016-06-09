@@ -22,7 +22,7 @@ static range_type g_timing_pulse[8] =
 
 
 CRFProtocolRST::CRFProtocolRST()
-	:CRFProtocol(g_timing_pause, g_timing_pulse, 36, 2, 'a')
+	:CRFProtocol(g_timing_pause, g_timing_pulse, 36, 2, "a")
 {
 }
 

@@ -85,7 +85,7 @@ void SnifferTest()
 		throw CHaException(CHaException::ErrBadParam,"This program is only intended for receivers supporting the pulse/space layer.");
 	}
 
-	CRFParser m_parser;
+	CRFParser m_parser(m_Log);
 	m_parser.AddProtocol(new CRFProtocolRST());
 	m_parser.AddProtocol(new CRFProtocolLivolo());
 	m_parser.AddProtocol(new CRFProtocolX10());

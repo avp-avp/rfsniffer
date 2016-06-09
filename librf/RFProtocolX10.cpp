@@ -18,7 +18,7 @@ static range_type g_Zero[3] =
 
 
 CRFProtocolX10::CRFProtocolX10()
-	:CRFProtocol(g_Zero, g_Pulse, 32, 2, 'A')
+	:CRFProtocol(g_Zero, g_Pulse, 32, 2, "A")
 {
 }
 

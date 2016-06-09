@@ -5,3 +5,4 @@ libutils_la_SOURCES = Exception.cpp Serializable.cpp haconfig.h locks.cpp loggin
 AM_CFLAGS = -pthread
 AM_CXXFLAGS = -pthread
 
+libutils_la_LDFLAGS = -all-static

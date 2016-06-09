@@ -16,10 +16,16 @@ class RFLIB_API CRFProtocol
 protected:
 	range_array_type m_ZeroLengths, m_PulseLengths;
 	int m_MinRepeat, m_Bits;
-	char m_PacketDelimeter;
-	bool m_Debug;
+	string m_PacketDelimeter;
+	bool m_Debug, m_DumpPacket;
+	CLog *m_Log;
+
+	string ManchesterDecode(const string&, bool expectPulse, char shortPause, char longPause, char shortPulse, char longPulse);
+	virtual void Clean() { m_DumpPacket = false; };
+	virtual bool needDump(const string &rawData);
+
 public:
-	CRFProtocol(range_array_type zeroLengths, range_array_type pulseLengths, int bits, int minRepeat, char PacketDelimeter );
+	CRFProtocol(range_array_type zeroLengths, range_array_type pulseLengths, int bits, int minRepeat, string PacketDelimeter );
 	virtual ~CRFProtocol();
 
 	virtual string Parse(base_type*, size_t len);
@@ -32,11 +38,13 @@ public:
 
 	virtual string tryDecode(string data);
 
-	inline bool isPulse(base_type v) { return (v&PULSE_BIT) != 0; };
-	inline base_type getLengh(base_type v) { return v&PULSE_MASK; };
+	static inline bool isPulse(base_type v) { return (v&PULSE_BIT) != 0; };
+	static inline base_type getLengh(base_type v) { return v&PULSE_MASK; };
 	virtual string getName() = 0;
+	bool needDumpPacket() {	return m_DumpPacket; };
 
 	unsigned long bits2long(const string&);
 	string reverse(const string&);
+	void setLog(CLog *log) { m_Log = log; };
 };
 

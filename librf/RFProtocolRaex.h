@@ -11,6 +11,5 @@ public:
 	virtual string DecodePacket(const string&);
 
 
-	string ManchesterDecode(const string&, bool expectPulse, char shortPause, char longPause, char shortPulse, char longPulse);
 };
 

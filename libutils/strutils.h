@@ -31,6 +31,7 @@ typedef map<string, int> map_s2i;
 
 string LIBUTILS_API GetPath(string path);
 void LIBUTILS_API SplitString(string s, char dlmt, string_vector &v);
+void LIBUTILS_API SplitString(string s, string dlmt, string_vector &v);
 
 #ifdef WIN32
 	#define DLL_EXPORT __declspec(dllexport)

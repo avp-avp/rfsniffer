@@ -2,7 +2,7 @@
 #include "RFProtocol.h"
 
 
-CRFProtocol::CRFProtocol(range_array_type zeroLengths, range_array_type pulseLengths, int bits, int minRepeat, char PacketDelimeter)
+CRFProtocol::CRFProtocol(range_array_type zeroLengths, range_array_type pulseLengths, int bits, int minRepeat, string PacketDelimeter)
 :m_ZeroLengths(zeroLengths), m_PulseLengths(pulseLengths), m_Bits(bits), m_MinRepeat(minRepeat), m_PacketDelimeter(PacketDelimeter)
 {
 	m_Debug = false;
@@ -23,6 +23,8 @@ string c2s(char c)
 
 string CRFProtocol::Parse(base_type* data, size_t dataLen)
 {
+	Clean();
+
 	string decodedRaw = DecodeRaw(data, dataLen);
 
 	if (!decodedRaw.length())
@@ -36,6 +38,9 @@ string CRFProtocol::Parse(base_type* data, size_t dataLen)
 
 	if(bits.length())
 		return getName()+":"+ DecodeData(bits);
+
+	if (needDump(decodedRaw))
+		m_DumpPacket = true;
 
 	return "";
 }
@@ -153,7 +158,7 @@ string CRFProtocol::DecodeBits(string_vector&rawPackets)
 
 		string decoded = DecodePacket(packet);
 
-		if (decoded.length() != m_Bits)
+		if (m_Bits && decoded.length() != m_Bits)
 			continue;
 
 		if (res.length())
@@ -175,6 +180,8 @@ string CRFProtocol::DecodeBits(string_vector&rawPackets)
 		{
 			res = decoded;
 			count = 1;
+			if (m_MinRepeat == 1)
+				break;
 		}
 	}
 
@@ -219,4 +226,81 @@ string CRFProtocol::reverse(const string&s)
 	}
 
 	return res;
+}
+
+string CRFProtocol::ManchesterDecode(const string&raw, bool expectPulse, char shortPause, char longPause, char shortPulse, char longPulse)
+{
+	enum t_state { expectStartPulse, expectStartPause, expectMiddlePulse, expectMiddlePause };
+
+	t_state state = expectPulse ? expectStartPulse : expectStartPause;
+	string res;
+
+	for_each_const(string, raw, c)
+	{
+		switch (state)
+		{
+		case expectStartPulse:   // ќжидаем короткий пульс, всегда 1
+			if (*c == shortPulse)
+			{
+				res += "1";
+				state = expectMiddlePause;
+			}
+			else
+			{
+				return "";
+			}
+			break;
+		case expectStartPause:  // ќжидаем короткую паузу, всегда 0
+			if (*c == shortPause)
+			{
+				res += "0";
+				state = expectMiddlePulse;
+			}
+			else
+			{
+				return "";
+			}
+			break;
+		case expectMiddlePulse:  // ќжидаем пульс. ≈сли короткий - пара закончилась, ждем короткую стартовую паузу. ≈сли длинный, получили начало след пары и ждем среднюю паузу
+			if (*c == shortPulse)
+			{
+				state = expectStartPause;
+			}
+			else if (*c == longPulse)
+			{
+				state = expectMiddlePause;
+				res += "1";
+			}
+			else
+			{
+				return "";
+			}
+			break;
+		case expectMiddlePause:  // ќжидаем паузу. ≈сли коротка€ - пара закончилась, ждем короткую стартовый пульс. ≈сли длинна€, получили начало след пары и ждем средний пульс
+			if (*c == shortPause)
+			{
+				state = expectStartPulse;
+			}
+			else if (*c == longPause)
+			{
+				state = expectMiddlePulse;
+				res += "0";
+			}
+			else
+			{
+				return "";
+			}
+			break;
+		default:
+			return "";
+		}
+	}
+
+	return res;
+}
+
+
+bool CRFProtocol::needDump(const string &rawData)
+{
+	return false;
 }

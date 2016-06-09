@@ -81,7 +81,7 @@ static range_type g_timing_pulse[8] =
 
 
 CRFProtocolLivolo::CRFProtocolLivolo()
-	:CRFProtocol(g_timing_pause, g_timing_pulse, 23, 2, 'A')
+	:CRFProtocol(g_timing_pause, g_timing_pulse, 23, 2, "A")
 {
 }
 

@@ -37,6 +37,24 @@ void SplitString(string s, char dlmt, string_vector &v)
 		v.push_back(s);
 }
 
+void SplitString(string s, string dlmt, string_vector &v)
+{
+	v.clear();
+
+	while (true)
+	{
+		int pos = s.find(dlmt);
+		if (pos == string::npos)
+			break;
+
+		v.push_back(s.substr(0, pos));
+		s = s.substr(pos + dlmt.length());
+	}
+
+	if (s.length())
+		v.push_back(s);
+}
+
 #ifdef WIN32
 
 std::wstring s2ws(const std::string& s)
