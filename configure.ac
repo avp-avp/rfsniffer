@@ -5,6 +5,8 @@ AC_PROG_CXX
 AM_PROG_LIBTOOL
 LT_INIT
 AM_PROG_AR
+AC_CHECK_HEADERS([json/json.h])
+AC_CHECK_HEADERS([jsoncpp/json/json.h])
 AC_CONFIG_HEADERS([config.h])
 
 AC_DEFINE([RFSNIFFER],[1],[Wiren board rfm sniffer])

@@ -69,65 +69,60 @@ void CMqttConnection::on_error()
 
 void CMqttConnection::NewMessage(string message)
 {
-	string_vector typeValue;
-	SplitString(message, ':', typeValue);
+	string type, value;
+	SplitPair(message, ':', type, value);
 
-	if (typeValue.size()!=2)
-		return;
-
-	if (typeValue[0]=="RST")
+	if (type=="RST")
 	{
-		string_vector parts, id, t, h;
-		SplitString(typeValue[1], ' ', parts);
-		SplitString(parts[0], '=', id);
-		SplitString(parts[1], '=', h);
-		SplitString(parts[2], '=', t);
+		string_map values;
+		SplitValues(value, values);
+		string id=values["id"], t=values["t"], h=values["h"];
 
-		string name = string("RST_")+id[1];
+		string name = string("RST_")+id;
 		CWBDevice *dev = m_Devices[name];
 		if (!dev)
 		{
-			string desc = string("RST sensor ")+id[1];
+			string desc = string("RST sensor ")+id;
 			dev = new CWBDevice(name, desc);
 			dev->AddControl("Temperature", CWBControl::Temperature, true);
 			dev->AddControl("Humidity", CWBControl::RelativeHumidity, true);
 			CreateDevice(dev);
 		}
 
-		dev->set("Temperature", t[1]);
-		dev->set("Humidity", h[1]);
-		m_Log->Printf(3, "Msg from RST %s", message.c_str());
+		dev->set("Temperature", t);
+		dev->set("Humidity", h);
+		m_Log->Printf(3, "Msg from RST %s", value.c_str());
 	} 
-	else if (typeValue[0]=="Oregon")
+	else if (type=="Oregon")
 	{
 		// Oregon:type=1D20 id=51 ch=1 t=23.2 h=39. RSSI=-106 (-106)
 
-		string_vector type, parts, id, ch, t, h;
-		SplitString(typeValue[1], ' ', parts);
-		SplitString(parts[0], '=', type);
-		SplitString(parts[1], '=', id);
-		SplitString(parts[2], '=', ch);
-		SplitString(parts[3], '=', t);
-		SplitString(parts[4], '=', h);
+		string_map values;
+		SplitValues(value, values);
+		string sensorType=values["type"], id=values["id"], ch=values["ch"], t=values["t"], h=values["h"];
 
 		//oregon_rx_1d20_68_1
-		string name = string("oregon_rx_")+type[1]+"_"+id[1]+"_"+ch[1];
+		string name = string("oregon_rx_")+sensorType+"_"+id+"_"+ch;
 		CWBDevice *dev = m_Devices[name];
 		if (!dev)
 		{
-
-			string desc = string("Oregon sensor [")+type[1]+"] ("+id[1]+"-"+ch[1]+")";
+			string desc = string("Oregon sensor [")+sensorType+"] ("+id+"-"+ch+")";
 			dev = new CWBDevice(name, desc);
 			dev->AddControl("temperature", CWBControl::Temperature, true);
-			dev->AddControl("humidity", CWBControl::RelativeHumidity, true);
+
+			if (h.length()>0)
+				dev->AddControl("humidity", CWBControl::RelativeHumidity, true);
+		
 			CreateDevice(dev);
 		}
 
-		dev->set("temperature", t[1]);
-		dev->set("humidity", h[1]);
-		m_Log->Printf(3, "Msg from RST %s", message.c_str());
+		dev->set("temperature", t);
+		if (h.length()>0)
+			dev->set("humidity", h);
+
+		m_Log->Printf(3, "Msg from Oregon %s", value.c_str());
 	} 
-	else if (typeValue[0]=="X10")
+	else if (type=="X10")
 	{
 		CWBDevice *dev = m_Devices["X10"];
 		if (!dev)
@@ -137,10 +132,10 @@ void CMqttConnection::NewMessage(string message)
 			CreateDevice(dev);
 		}
 
-		dev->set("Command", typeValue[1]);
+		dev->set("Command", value);
 		m_Log->Printf(3, "Msg from X10 %s", message.c_str());
 	}
-	else if (typeValue[0]=="Raex" || typeValue[0]=="Livolo")
+	else if (type=="Raex" || type=="Livolo")
 	{
 		CWBDevice *dev = m_Devices["Remotes"];
 		if (!dev)
@@ -152,7 +147,7 @@ void CMqttConnection::NewMessage(string message)
 			CreateDevice(dev);
 		}
 
-		dev->set(typeValue[0], typeValue[1]);
+		dev->set(type, value);
 		m_Log->Printf(3, "New RF message %s", message.c_str());
 	}
 

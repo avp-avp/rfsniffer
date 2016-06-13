@@ -30,8 +30,11 @@ typedef map<string, int> map_s2i;
 #endif
 
 string LIBUTILS_API GetPath(string path);
-void LIBUTILS_API SplitString(string s, char dlmt, string_vector &v);
-void LIBUTILS_API SplitString(string s, string dlmt, string_vector &v);
+void LIBUTILS_API SplitString(const string &s, char dlmt, string_vector &v);
+void LIBUTILS_API SplitString(const string &s, string dlmt, string_vector &v);
+void LIBUTILS_API SplitPair(const string &s, string dlmt, string &first, string &second);
+void LIBUTILS_API SplitPair(const string &s, char dlmt, string &first, string &second);
+void LIBUTILS_API SplitValues(const string &s, string_map &v, char groupDlmt=' ', char valueDlmt='=');
 
 #ifdef WIN32
 	#define DLL_EXPORT __declspec(dllexport)

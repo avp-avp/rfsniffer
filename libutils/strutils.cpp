@@ -19,9 +19,10 @@ string GetPath(string path)
 }
 
 
-void SplitString(string s, char dlmt, string_vector &v)
+void SplitString(const string &str, char dlmt, string_vector &v)
 {
 	v.clear();
+	string s = str;
 
 	while (true)
 	{
@@ -37,9 +38,10 @@ void SplitString(string s, char dlmt, string_vector &v)
 		v.push_back(s);
 }
 
-void SplitString(string s, string dlmt, string_vector &v)
+void SplitString(const string &str, string dlmt, string_vector &v)
 {
 	v.clear();
+	string s = str;
 
 	while (true)
 	{
@@ -54,6 +56,59 @@ void SplitString(string s, string dlmt, string_vector &v)
 	if (s.length())
 		v.push_back(s);
 }
+
+void SplitPair(const string &str, string dlmt, string &first, string &second)
+{
+	string s = str;
+	int part=0;
+
+	while (true)
+	{
+		size_t pos = s.find(dlmt);
+		if (pos==string::npos)
+			break;
+
+		string value = s.substr(0, pos);
+		s = s.substr(pos+1);
+
+		switch (part++)
+		{
+			case 0: first=value; break;
+			case 1: second=value; break;
+			default: throw CHaException(CHaException::ErrBadParam, str);
+		}
+	}
+
+	if (part!=2)
+		throw CHaException(CHaException::ErrBadParam, str);
+}
+
+void SplitPair(const string &s, char dlmt, string &first, string &second)
+{
+	int part=0;
+	size_t pos = s.find(dlmt);
+
+	if (pos == s.npos)
+		throw CHaException(CHaException::ErrBadParam, s);
+
+	first = s.substr(0, pos);
+	second = s.substr(pos + 1);
+}
+
+void LIBUTILS_API SplitValues(const string &s, string_map &v, char groupDlmt, char valueDlmt)
+{
+	v.clear();
+	string_vector tmp;
+	SplitString(s, groupDlmt, tmp);
+
+	for_each_const(string_vector, tmp, i)
+	{
+		string first, second;	
+		SplitPair(*i, valueDlmt, first, second);
+		v[first] = second;
+	}
+}
+
 
 #ifdef WIN32
 

@@ -3,7 +3,7 @@
 
 static range_type g_timing_pause[7] =
 {
-	{ 1200, 2000 },
+	{ 1, 1 },
 	{ 380, 850 },
 	{ 851, 1400 },
 	{ 0,0 }
@@ -11,7 +11,7 @@ static range_type g_timing_pause[7] =
 
 static range_type g_timing_pulse[8] =
 {
-	{ 3500, 4500 },
+	{ 1, 1 },
 	{ 200, 615 },
 	{ 615, 1100 },
 	{ 0,0 }
@@ -19,7 +19,7 @@ static range_type g_timing_pulse[8] =
 
 
 CRFProtocolOregon::CRFProtocolOregon()
-	:CRFProtocol(g_timing_pause, g_timing_pulse, 0, 1, "cCcCcCcCcCcCcCcCcCcCcCcCcCcCcC")
+	:CRFProtocol(g_timing_pause, g_timing_pulse, 0, 1, "cCcCcCcCcCcCcCcCcCcCcCcCcCcCcCbBc")
 {
 }
 
@@ -34,10 +34,10 @@ string CRFProtocolOregon::DecodePacket(const string& raw)
 	if (raw.length() < 10)
 		return "";
 
-	string packet;
+	string packet="0";
 	char next=0;
 	bool second = false;
-	bool expectPause = true;
+	bool expectPause = false;
 
 	for_each_const(string, raw, c)
 	{
@@ -107,7 +107,7 @@ string CRFProtocolOregon::DecodePacket(const string& raw)
 	}
 
 	unsigned int crc = 0, originalCRC = -1;
-	string hexPacket;
+	string hexPacket="";
 
 	if (packet.length()<48)
 	{
@@ -163,7 +163,7 @@ string CRFProtocolOregon::DecodeData(const string& packet) // Преобразование бит
 		a 1d20 1 51 0 222 0 83 8 03 fb
 		*/
 		int channel = packet[5]-'0';
-		int id = ((packet[6]-'0')<<4)+ (packet[7] - '0');
+		int id = ((packet[7]-'0')<<4)+ (packet[6] - '0');
 		float temp = (float)0.1*atoi(reverse(packet.substr(9, 3)));
 		if (packet[12] != '0')
 			temp *= -1;

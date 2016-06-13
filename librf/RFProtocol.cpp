@@ -158,6 +158,9 @@ string CRFProtocol::DecodeBits(string_vector&rawPackets)
 
 		string decoded = DecodePacket(packet);
 
+		if (decoded == "")
+			continue;
+
 		if (m_Bits && decoded.length() != m_Bits)
 			continue;
 

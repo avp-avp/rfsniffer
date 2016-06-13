@@ -61,6 +61,7 @@ int waitfordata(int fd, unsigned long maxusec)
 
 int main(int argc, char* argv[])
 {
+	CLog *m_Log = CLog::Default();
 	bool bDebug = false;
 
 	if (argc>=2 && !strcmp(argv[1], "-D"))
@@ -68,7 +69,24 @@ int main(int argc, char* argv[])
 		bDebug = true;
 	}
 
-	CLog *m_Log = CLog::GetLog("Main");
+	string spiDevice = "/dev/spidev32766.0";
+
+
+	char* irq = getenv("WB_GPIO_RFM_IRQ");
+	char* spiMajor = getenv("WB_RFM_SPI_MAJOR");
+	char* spiMinor = getenv("WB_RFM_SPI_MINOR");
+	m_Log->Printf(0, "WB_GPIO_RFM_IRQ=%s", irq);
+	m_Log->Printf(0, "WB_RFM_SPI_MAJOR=%s", spiMajor);
+	m_Log->Printf(0, "WB_RFM_SPI_MINOR=%s", spiMinor);
+
+	if (spiMajor || spiMinor)
+	{
+		char buffer[256];
+		snprintf(buffer, sizeof(buffer), "/dev/spidev%s.%s", spiMajor?spiMajor:"32766", spiMinor?spiMinor:"0");
+		m_Log->Printf(0, "Using SPI device %s", buffer);
+		spiDevice = buffer;
+	}
+
 	m_Log->SetLogLevel(3);
 	m_Log->SetConsoleLogLevel(4);
 
@@ -77,7 +95,7 @@ int main(int argc, char* argv[])
 	spi_config.speed=500000;
 	spi_config.delay=0;
 	spi_config.bits_per_word=8;
-	SPI mySPI("/dev/spidev32766.0",&spi_config);
+	SPI mySPI(spiDevice.c_str(),&spi_config);
 	if (!mySPI.begin())
 	{
 		m_Log->Printf(0, "SPI init failed");
