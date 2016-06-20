@@ -10,13 +10,14 @@
 #	define snprintf _snprintf
 #elif defined(WIN32)
 #	define HA_WIN32
-	//#define snprintf sprintf_s
+#	define HA2
+//#define snprintf sprintf_s
 #else
-	#define HA_LINUX
+#	define HA_LINUX
 #endif
 
-#ifdef HAVE_LUA_H
-	#define USE_LUA
+#if defined(HAVE_LUA_H) || defined(HAVE_LUA5_2_LUA_H)
+#	define USE_LUA
 #endif 
 
 #ifdef HA2
@@ -27,10 +28,10 @@
 #define USE_JSON
 
 #ifdef USE_XML
-	#define _LIBUTILS_USE_XML
-	#define _LIBUTILS_USE_XML_LIBXML2
+#	define _LIBUTILS_USE_XML
+#	define _LIBUTILS_USE_XML_LIBXML2
 #elif defined(USE_JSON) && defined(HAVE_JSON_JSON_H)
-	#define CConfigItem Jsoncpp::Value
+#	define CConfigItem Jsoncpp::Value
 #endif
 
 

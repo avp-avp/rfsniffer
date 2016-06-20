@@ -634,6 +634,7 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+XML2_CFLAGS
 CXXCPP
 CPP
 LT_SYS_LIBRARY_PATH
@@ -15934,6 +15935,64 @@ unknown)
 esac
 
 
+# Check whether --enable-shared was given.
+if test "${enable_shared+set}" = set; then :
+  enableval=$enable_shared; p=${PACKAGE-default}
+    case $enableval in
+    yes) enable_shared=yes ;;
+    no) enable_shared=no ;;
+    *)
+      enable_shared=no
+      # Look at the argument we got.  We use all the common list separators.
+      lt_save_ifs=$IFS; IFS=$IFS$PATH_SEPARATOR,
+      for pkg in $enableval; do
+	IFS=$lt_save_ifs
+	if test "X$pkg" = "X$p"; then
+	  enable_shared=yes
+	fi
+      done
+      IFS=$lt_save_ifs
+      ;;
+    esac
+else
+  enable_shared=no
+fi
+
+
+
+
+
+
+
+cmd=`which xml2-config`
+if test "x$cmd" != "x" ; then
+echo "checking $cmd for flags..."
+XML2_CFLAGS=`$cmd --cflags`
+XML2_CFLAGS=$XML2_CFLAGS
+
+echo "  FLAGS: $XML2_CFLAGS"
+fi
+
+
+for ac_header in ../../config.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "../../config.h" "ac_cv_header_______config_h" "$ac_includes_default"
+if test "x$ac_cv_header_______config_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_______CONFIG_H 1
+_ACEOF
+ ln -s ../../config.h .
+else
+  ac_config_headers="$ac_config_headers config.h"
+
+fi
+
+done
+
+
+
+CPPFLAGS_OLD="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} ${XML2_CFLAGS}"
 for ac_header in json/json.h
 do :
   ac_fn_cxx_check_header_mongrel "$LINENO" "json/json.h" "ac_cv_header_json_json_h" "$ac_includes_default"
@@ -15958,11 +16017,60 @@ fi
 
 done
 
-ac_config_headers="$ac_config_headers config.h"
+for ac_header in lua.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "lua.h" "ac_cv_header_lua_h" "$ac_includes_default"
+if test "x$ac_cv_header_lua_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LUA_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in lua5.2/lua.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "lua5.2/lua.h" "ac_cv_header_lua5_2_lua_h" "$ac_includes_default"
+if test "x$ac_cv_header_lua5_2_lua_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LUA5_2_LUA_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in libxml/tree.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "libxml/tree.h" "ac_cv_header_libxml_tree_h" "$ac_includes_default"
+if test "x$ac_cv_header_libxml_tree_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBXML_TREE_H 1
+_ACEOF
+
+fi
+
+done
+
+for ac_header in libxml2/libxml/tree.h
+do :
+  ac_fn_cxx_check_header_mongrel "$LINENO" "libxml2/libxml/tree.h" "ac_cv_header_libxml2_libxml_tree_h" "$ac_includes_default"
+if test "x$ac_cv_header_libxml2_libxml_tree_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBXML2_LIBXML_TREE_H 1
+_ACEOF
+
+fi
+
+done
+
+CPPFLAGS="${CPPFLAGS_OLD}"
 
 
 
 $as_echo "#define RFSNIFFER 1" >>confdefs.h
+
 
 
 ac_config_files="$ac_config_files Makefile libutils/Makefile librf/Makefile tests/Makefile rfsniffer/Makefile"
@@ -16061,7 +16169,6 @@ DEFS=-DHAVE_CONFIG_H
 
 ac_libobjs=
 ac_ltlibobjs=
-U=
 for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'
