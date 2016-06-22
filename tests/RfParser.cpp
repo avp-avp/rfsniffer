@@ -1,12 +1,12 @@
 
 #include "stdafx.h"
-#include "../libutils/logging.h"
-#include "../libutils/Exception.h"
-#include "../librf/RFParser.h"
-#include "../librf/RFProtocolLivolo.h"
-#include "../librf/RFProtocolX10.h"
-#include "../librf/RFProtocolRST.h"
-#include "../librf/RFProtocolRaex.h"
+#include "../libs/libutils/logging.h"
+#include "../libs/libutils/Exception.h"
+#include "../libs/librf/RFParser.h"
+#include "../libs/librf/RFProtocolLivolo.h"
+#include "../libs/librf/RFProtocolX10.h"
+#include "../libs/librf/RFProtocolRST.h"
+#include "../libs/librf/RFProtocolRaex.h"
 
 #define MAX_SIZE 10000
 
@@ -41,10 +41,17 @@ typedef pstr_pair *ppstr_pair;
 
 
 static const pstr_pair Tests[] = {
-	{ "capture-0906-165011.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
-	{ "capture-0706-164649.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
-	{ "capture-0706-211823.rcf", "Oregon:type=1D20 id=51 ch=1 t=24.7 h=46" },
+//	{ "capture-0906-212933.rcf", "" },
+	{ "capture-0906-214352.rcf", "Oregon:type=1d20 id=15 ch=1 t=22.6 h=41" },
+	{ "capture-0906-214234.rcf", "Oregon:type=1d20 id=15 ch=1 t=22.6 h=41" },
+	{ "capture-0906-212618.rcf", "Oregon:type=1d20 id=15 ch=1 t=22.7 h=41" },
+	{ "capture-0906-183444.rcf", "Oregon:type=1d20 id=15 ch=1 t=23.3 h=39" },
+	{ "capture-0906-165011.rcf", "Oregon:type=1d20 id=15 ch=1 t=24.2 h=40" },
+	{ "capture-0906-164649.rcf", "Oregon:type=1d20 id=15 ch=1 t=23.9 h=40" },
+	{ "capture-0706-211823.rcf", "Oregon:type=1d20 id=15 ch=1 t=24.7 h=46" },
+	{ "capture-0906-210412.rcf", "Oregon:type=1d20 id=15 ch=1 t=23.0 h=40" },
 	
+
 	
 	//*
 	{ "capture-1303-212826.rcf", "X10:D2ON" },
@@ -82,6 +89,10 @@ static const pstr_pair Tests[] = {
 		{ "capture-1004-121901.rcf", "RST:id=1b10 h=34 t=27.2"},
 		{"capture-1004-122939.rcf", ""},  //FAILED
 		{"capture-1004-125748.rcf","X10:D2OFF" },
+
+
+		{"capture-1506-164227.rcf", "X10:D2ON"},
+		{"capture-1506-164315.rcf", "??"},
 		//*/
 	NULL
 };
@@ -92,6 +103,20 @@ void RfParserTest()
 
 	while (**test)
 	{
+		try
+		{
+			string type, value;
+			SplitPair((*test)[1], ':', type, value);
+			if (value.find(' ') != value.npos)
+			{
+				string_map values;
+				SplitValues(value, values);
+			}
+		}
+		catch (CHaException ex)
+		{
+		}
+
 		string res = DecodeFile((*test)[0]);
 		if (res != (*test)[1])
 		{

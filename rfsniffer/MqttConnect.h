@@ -1,5 +1,5 @@
 #include "mosquittopp.h"
-#include "../librf/WBDevice.h"
+#include "../libs/libwb/WBDevice.h"
 
 
 class CMqttConnection

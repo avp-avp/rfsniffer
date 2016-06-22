@@ -1,10 +1,10 @@
 
 #include "stdafx.h"
-#include "../libutils/logging.h"
-#include "../libutils/Exception.h"
-#include "../librf/spidev_lib++.h"
-#include "../librf/RFM69OOKregisters.h"
-#include "../librf/RFM69OOK.h"
+#include "../libs/libutils/logging.h"
+#include "../libs/libutils/Exception.h"
+#include "../libs/librf/spidev_lib++.h"
+#include "../libs/librf/RFM69OOKregisters.h"
+#include "../libs/librf/RFM69OOK.h"
 
 
 //SPI *mySPI = NULL;

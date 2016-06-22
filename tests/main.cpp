@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "../libutils/strutils.h"
+#include "../libs/libutils/strutils.h"
 //#include "../lua/liblua.h"
 
 void LogTest();

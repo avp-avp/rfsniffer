@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "../libutils/logging.h"
-#include "../libutils/Exception.h"
+#include "../libs/libutils/logging.h"
+#include "../libs/libutils/Exception.h"
 #include "MqttConnect.h"
 
 
