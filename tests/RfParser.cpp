@@ -7,6 +7,7 @@
 #include "../libs/librf/RFProtocolX10.h"
 #include "../libs/librf/RFProtocolRST.h"
 #include "../libs/librf/RFProtocolRaex.h"
+#include "../libs/librf/RFProtocolNooLite.h"
 
 #define MAX_SIZE 10000
 

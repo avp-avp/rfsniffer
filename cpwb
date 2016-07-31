@@ -4,4 +4,5 @@
 #scp libutils/.libs/libutils.so.0 root@wirenboard:/usr/lib
 scp tests/rftest root@wirenboard:~
 scp rfsniffer/rfsniffer root@wirenboard:~
+#ssh root@wirenboard ./rftest
 

@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 	string mqttHost="localhost";
 	string scannerParams;
 	long spiSpeed = 500000;
+	int gpioInt = 38;
 	//long samplingFreq = 0;
 	int fixedThresh=0;
 	int rssi = 0;
@@ -87,6 +88,9 @@ int main(int argc, char* argv[])
 		snprintf(buffer, sizeof(buffer), "/dev/spidev%s.%s", spiMajor?spiMajor:"32766", spiMinor?spiMinor:"0");
 		spiDevice = buffer;
 	}
+
+	if (irq && atoi(irq)>0)
+		gpioInt= atoi(irq);
 
     int c;
     //~ int digit_optind = 0;
@@ -127,6 +131,10 @@ int main(int argc, char* argv[])
          	rssi = atoi(optarg);
          	break;
 
+         case 'g':
+         	gpioInt = atoi(optarg);
+         	break;
+
          case 't':
 	 		bDumpAllRegs = true;
          	break;
@@ -139,6 +147,7 @@ int main(int argc, char* argv[])
         	printf("Ussage: rfsniffer [params]\n");
         	printf("-D - debug mode. Write good but not decoded packets to files\n");
         	printf("-d - start daemon\n");
+        	printf("-g <DIO0 gpio> - set custom DIO0 GPIO number. Default %d\n", gpioInt);
         	printf("-s <spi device> - set custom SPI device. Default %s\n", spiDevice.c_str());
         	printf("-l <lirc device> - set custom lirc device. Default %s\n", lircDevice.c_str());
         	printf("-m <mqtt host> - set custom mqtt host. Default %s\n", mqttHost.c_str());
@@ -146,7 +155,7 @@ int main(int argc, char* argv[])
 
         	printf("-S -<low level>..-<high level>/<seconds for step> - scan for noise. \n");
 //        	printf("-r <RSSI> - reset RSSI Threshold after each packet. 0 - Disabled. Default %ld\n", rssi);
-        	printf("-f <fixed Threshold> - Use OokFixedThresh with fixed level. 0 - Disabled. Default %ld\n", fixedThresh);
+        	printf("-f <fixed Threshold> - Use OokFixedThresh with fixed level. 0 - Disabled. Default %d\n", fixedThresh);
 //        	printf("-f <sampling freq> - set custom sampling freq. Default %d\n", samplingFreq);
         	return 0;
         default:
@@ -157,8 +166,26 @@ int main(int argc, char* argv[])
 
 	m_Log->Printf(0, "Using SPI device %s, lirc device %s, mqtt on %s", spiDevice.c_str(), lircDevice.c_str(), mqttHost.c_str());
 
+	if (bDaemon)
+	{
+		printf ("Start daemon mode\n");
+		pid_t pid = fork();
+		if (pid < 0)
+		{
+			exit(EXIT_FAILURE);
+		}
+		else if (pid > 0)
+		{
+			exit(EXIT_SUCCESS);
+		}
+		fclose (stdout);
+	}
+	else
+	{
+		m_Log->SetConsoleLogLevel(4);
+	}
+
 	m_Log->SetLogLevel(3);
-	m_Log->SetConsoleLogLevel(4);
 
 	const size_t BUFFER_SIZE = 1024 * 128;
 	lirc_t *data = new lirc_t[BUFFER_SIZE];
@@ -176,7 +203,7 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-    RFM69OOK rfm(&mySPI);
+    RFM69OOK rfm(&mySPI, gpioInt);
     rfm.initialize();
 
 	try
@@ -300,7 +327,7 @@ int main(int argc, char* argv[])
 	    }
 
 	    rfm.receiveBegin();
-		CMqttConnection conn(mqttHost, m_Log);
+		CMqttConnection conn(mqttHost, m_Log, &rfm);
 
 		CRFParser m_parser(m_Log, (bDebug || writePackets>0)?".":"");
 		m_parser.AddProtocol("All");
@@ -373,7 +400,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 			lastRSSI = rfm.readRSSI();
-			lastAFC = rfm.getAFC();
+			lastAFC = 0;//rfm.getAFC();
 
 			data_ptr += result / sizeof(lirc_t);
 		};

@@ -2,10 +2,11 @@
 #include "../libs/libutils/logging.h"
 #include "../libs/libutils/Exception.h"
 #include "MqttConnect.h"
+#include "../libs/librf/RFM69OOK.h"
 
 
-CMqttConnection::CMqttConnection(string Server, CLog* log)
-:m_isConnected(false), mosquittopp("TestMqttConnection")
+CMqttConnection::CMqttConnection(string Server, CLog* log, RFM69OOK *rfm)
+:m_isConnected(false), mosquittopp("TestMqttConnection"), m_RFM(rfm)
 {
 	m_Server  = Server;
 	m_Log = log;
@@ -29,6 +30,10 @@ void CMqttConnection::on_connect(int rc)
 	{
 		m_isConnected = true;
 	}
+
+	subscribe(NULL, "/devices/noolite_tx_0xd61/controls/#");
+	subscribe(NULL, "/devices/noolite_tx_0xd62/controls/#");
+	subscribe(NULL, "/devices/noolite_tx_0xd63/controls/#");
 }
 
 void CMqttConnection::on_disconnect(int rc)
@@ -44,7 +49,68 @@ void CMqttConnection::on_publish(int mid)
 
 void CMqttConnection::on_message(const struct mosquitto_message *message)
 {
-	m_Log->Printf(1, "mqtt::on_message(%s=%s)", message->topic, message->payload);
+	try
+	{
+		m_Log->Printf(3, "mqtt::on_message(%s=%s)", message->topic, message->payload);
+		string_vector v;
+		SplitString(message->topic, '/', v);
+		if (v.size()!=6)
+			return;
+
+		if (v[5]!="on")
+			return;
+
+		string addr = v[2];
+		size_t pos = addr.find("0x");
+		if (pos==string::npos || pos>addr.length()-2)
+			return;
+		addr = addr.substr(pos+2);
+
+		string control = v[4];
+
+		m_Log->Printf(1, "%s control %s set to %s", addr.c_str(), control.c_str(), message->payload);
+		uint8_t cmd=4;
+		string extra;
+
+		if (control=="state")
+			cmd = atoi((char*)message->payload)?2:0;
+		else if (control=="level")
+		{
+			cmd = 6;
+			extra=string(" level=")+(char*)message->payload;
+		}
+		else if (control=="color")
+		{
+			cmd = 6;
+			string_vector v;
+			SplitString((char*)message->payload, ';', v);
+			if (v.size()==3)
+			{
+				extra+=" fmt=3 r="+v[0]+" g="+v[1]+" b="+v[2];
+			}
+		}
+
+		else 
+		{
+			cmd = m_nooLite.getCommand(control);
+			if (cmd==CRFProtocolNooLite::nlcmd_error)
+				return;
+		}
+
+
+		static uint8_t buffer[100];
+		size_t bufferSize=sizeof(buffer);
+		string command = "nooLite:cmd="+itoa(cmd)+" addr="+addr+extra;
+		m_Log->Printf(1, "%s", command.c_str());
+		m_nooLite.EncodeData(command, 2000, buffer, bufferSize);
+		m_RFM->send(buffer, bufferSize);
+		m_RFM->receiveBegin();
+	} 
+	catch (CHaException ex)
+	{
+		m_Log->Printf(0, "Exception %s (%d)", ex.GetMsg().c_str(), ex.GetCode());
+	}
+
 }
 
 void CMqttConnection::on_subscribe(int mid, int qos_count, const int *granted_qos)
@@ -92,6 +158,58 @@ void CMqttConnection::NewMessage(string message)
 		dev->set("Temperature", t);
 		dev->set("Humidity", h);
 		m_Log->Printf(3, "Msg from RST %s", value.c_str());
+	} 
+	else if (type=="nooLite")
+	{
+		// nooLite:sync=80 cmd=21 type=2 t=24.6 h=39 s3=ff bat=0 addr=1492 fmt=07 crc=a2
+
+		string_map values;
+		SplitValues(value, values);
+		string sensorType=values["type"], id=values["addr"], cmd=values["cmd"], t=values["t"], h=values["h"];
+
+		if (cmd=="21")
+		{
+			//noolite_rx_0x1492
+			string name = string("noolite_rx_0x")+id;
+			CWBDevice *dev = m_Devices[name];
+			if (!dev)
+			{
+				string desc = string("Noolite Sensor 0x")+id;
+				dev = new CWBDevice(name, desc);
+				dev->AddControl("temperature", CWBControl::Temperature, true);
+
+				if (h.length()>0)
+					dev->AddControl("humidity", CWBControl::RelativeHumidity, true);
+			
+				CreateDevice(dev);
+			}
+
+			dev->set("temperature", t);
+			if (h.length()>0)
+				dev->set("humidity", h);
+		} else if (cmd=="0" || cmd=="4" || cmd=="2") {
+			//noolite_rx_0x1492
+			string name = string("noolite_rx_0x")+id;
+			CWBDevice *dev = m_Devices[name];
+			if (!dev)
+			{
+				string desc = string("Noolite Sensor 0x")+id;
+				dev = new CWBDevice(name, desc);
+				dev->AddControl("state", CWBControl::Switch, true);
+			
+				CreateDevice(dev);
+			}
+
+			if (cmd=="0")
+				dev->set("state", "0");
+			else if (cmd=="2")
+				dev->set("state", "1");
+			else if (cmd=="4")
+				dev->set("state", dev->getS("state")=="1"?"0":"1");
+			else 
+				dev->set("state", "0");
+		}
+		m_Log->Printf(3, "Msg from nooLite %s", value.c_str());
 	} 
 	else if (type=="Oregon")
 	{

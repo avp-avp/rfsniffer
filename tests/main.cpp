@@ -12,9 +12,9 @@ void MqttTest();
 int main()
 {
 	srand(time(NULL));
-	LogTest();
-	RfParserTest();
+	//LogTest();
+	//RfParserTest();
 	Rfm69Test();
-	SnifferTest();
-	MqttTest();
+	//SnifferTest();
+	//MqttTest();
 }
