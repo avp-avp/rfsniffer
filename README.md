@@ -11,8 +11,8 @@
 - make
 
 В результате получается 2 нужных файла:
-- rftest (tests/.libs/rftest)
-- rfsniffer (rfsniffer/.libs/rfsniffer)
+- rftest (tests/rftest)
+- rfsniffer (rfsniffer/rfsniffer)
 
 Необходимо скопировать rftest и rfsniffer куда-либо на устройство
 
