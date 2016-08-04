@@ -3,9 +3,9 @@
   "radio": {
     "lirc_device": "/dev/lirc0",
     "spi_device": "/dev/spidev32766.0",
-    "rfm_irq": 38
-    //, "rssi": 90
+    "rssi": -90,
     //, "fixedThresh": 60
+    "rfm_irq": 38
   },
 
   "mqtt": {
@@ -13,7 +13,7 @@
   },
 
   "debug":{
-    "writePackets": 60,
+    //"writePackets": 60,
     "savePath": ".",
 
     "Log": [{
