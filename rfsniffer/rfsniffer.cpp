@@ -60,6 +60,33 @@ int waitfordata(int fd, unsigned long maxusec)
 	return false;
 }
 
+void CleanData(lirc_t *data, size_t *size)
+{
+	lirc_t *in = data;
+	lirc_t *out = data;
+
+	while (in-data<*size)
+	{
+		if (CRFProtocol::getLengh(*in)<20 && in!=data)
+		{
+			out[-1] = (CRFProtocol::isPulse(out[-1])?PULSE_BIT:0)| (CRFProtocol::getLengh(out[-1])+CRFProtocol::getLengh(*in));
+		} 
+		else if(in!=data && CRFProtocol::isPulse(out[-1])==CRFProtocol::isPulse(in[0]))
+		{
+			out[-1] = (CRFProtocol::isPulse(out[-1])?PULSE_BIT:0)| (CRFProtocol::getLengh(out[-1])+CRFProtocol::getLengh(*in));
+		}
+		else
+		{
+			*out=*in;
+			out++;
+		}
+
+		in++;
+	}
+
+	*size = out-data;
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -207,6 +234,7 @@ int main(int argc, char* argv[])
 
 	CLog *m_Log = CLog::Default();
 	m_Log->Printf(0, "Using SPI device %s, lirc device %s, mqtt on %s", spiDevice.c_str(), lircDevice.c_str(), mqttHost.c_str());
+	m_Log->Printf(0, "Fixed Threshold=%d, rssi=%d", fixedThresh, rssi);
 
 	if (bDaemon)
 	{
@@ -375,7 +403,8 @@ int main(int argc, char* argv[])
 		m_parser.AddProtocol("All");
 
 		lirc_t *data_ptr = data;
-		time_t lastReport = 0, packetStart = time(NULL), startTime = time(NULL);
+		time_t lastReport = 0, startTime = time(NULL);
+		unsigned long packetStart=millis();
 		bool m_bExecute=true;
 		int lastRSSI = -1000, minGoodRSSI=0;
 
@@ -405,15 +434,114 @@ int main(int argc, char* argv[])
 			}
 
 			if (data_ptr == data)
+				packetStart = millis();
+
+			bool bHaveData = waitfordata(fd, 100000L);
+			size_t dataSize = data_ptr - data;
+
+			while (bHaveData)
 			{
-				packetStart = time(NULL);
+				result = read(fd, (void *)data_ptr, count);
+				if (result == 0) {
+					fprintf(stderr, "read() failed\n");
+					break;
+				}
+				dataSize = result / sizeof(lirc_t);
+				lastRSSI = rfm.readRSSI();	
+
+				if (data!=data_ptr)
+				{
+					data--;
+					dataSize++;
+				}
+
+				CleanData(data_ptr, &dataSize);
+				data_ptr = data_ptr + dataSize;
+				bHaveData = waitfordata(fd, 1000L);
+			}
+
+			if (dataSize<300)
+			{
+				if (rssi<0)
+					rfm.setRSSIThreshold(rssi);
+
+				continue;
+			}
+
+			if (dataSize>BUFFER_SIZE-10 || millis()-packetStart>200L)
+			{
+				if (rssi<0)
+					rfm.setRSSIThreshold(rssi);
+
+				if (writePackets>0)
+				{
+					m_parser.SaveFile(data, dataSize);
+					m_Log->Printf(3, "Saved file RSSI=%d (%d)", lastRSSI, minGoodRSSI);
+				}
+
+				string parsedResult = m_parser.Parse(data, dataSize);
+				if (parsedResult.length())
+				{
+					m_Log->Printf(3, "RF Recieved: %s. RSSI=%d (%d), len=%ld", parsedResult.c_str(), lastRSSI, minGoodRSSI, dataSize);
+					conn.NewMessage(parsedResult);
+					if (minGoodRSSI>lastRSSI)
+						minGoodRSSI=lastRSSI;
+				}
+				else
+				{
+					m_Log->Printf(4, "Recieved %ld signals. Not decoded\n", dataSize);
+				}
+
+				if (millis()-packetStart>500L)
+				{
+					data_ptr = data;
+					packetStart = millis();
+				}
+			}
+		}
+
+/* v1
+		while (m_bExecute) {
+			if (writePackets>0 && time(NULL)-startTime>writePackets)
+			{
+				m_bExecute = false;
+				break;
+			}
+
+			int result;
+			usleep(10);
+
+			size_t count = sizeof(lirc_t)*BUFFER_SIZE - (data_ptr - data)*sizeof(lirc_t);
+
+			if (count == 0)
+			{
+				m_Log->Printf(0, "RF buffer full");
+				data_ptr = data;
+				continue;
+			}
+
+			if (lastReport != time(NULL) && data_ptr - data>=32)
+			{
+				m_Log->Printf(writePackets?3:4,"RF got data %ld bytes. RSSI=%d", data_ptr - data, lastRSSI);
+				lastReport = time(NULL);
+			}
+
+			if (data_ptr == data)
+			{
+				packetStart = millis();
+
+				if (rssi<0)
+					rfm.setRSSIThreshold(rssi);
 			}
 			else if (data_ptr - data<32)
 			{
 
 			}
-			else if (!waitfordata(fd, 300000) || data_ptr - data>BUFFER_SIZE-10 || time(NULL)-packetStart>2)
+			else if (!waitfordata(fd, 100000) || data_ptr - data>BUFFER_SIZE-10 || millis()-packetStart>200000L)
 			{
+				if (rssi<0)
+					rfm.setRSSIThreshold(rssi);
+
 				if (writePackets>0)
 				{
 					m_parser.SaveFile(data, data_ptr - data);
@@ -433,10 +561,8 @@ int main(int argc, char* argv[])
 					m_Log->Printf(4, "Recieved %ld signals. Not decoded\n", data_ptr - data);
 				}
 				data_ptr = data;
-				packetStart = time(NULL);
+				packetStart = millis();
 
-				if (rssi<0)
-					rfm.setRSSIThreshold(rssi);
 			}
 
 			result = read(fd, (void *)data_ptr, count);
@@ -448,6 +574,7 @@ int main(int argc, char* argv[])
 
 			data_ptr += result / sizeof(lirc_t);
 		};
+*/
 	} 
 	catch (CHaException ex)
 	{

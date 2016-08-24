@@ -51,7 +51,7 @@ void CMqttConnection::on_message(const struct mosquitto_message *message)
 {
 	try
 	{
-		m_Log->Printf(4, "mqtt::on_message(%s=%s)", message->topic, message->payload);
+		m_Log->Printf(6, "mqtt::on_message(%s=%s)", message->topic, message->payload);
 		string_vector v;
 		SplitString(message->topic, '/', v);
 		if (v.size()!=6)
