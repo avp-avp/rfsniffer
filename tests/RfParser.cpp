@@ -129,7 +129,7 @@ void getAllTestFiles( string path, string_vector &result )
    }
 }
 
-void RfParserTest()
+void RfParserTest(string path)
 {
 	CLog *log = CLog::GetLog("Main");
 	CRFParser parser(log);
@@ -143,16 +143,17 @@ void RfParserTest()
 
 	ppstr_pair test = Tests;
 
-/*
-	string_vector files;
-	getAllTestFiles(".", files);
-	for_each(string_vector, files, f)
+	if (path.length())
 	{
-		string res = DecodeFile(&parser, log, f->c_str());
-		printf("File: %s, decoded: %s\n", f->c_str(), res.c_str());
+		string_vector files;
+		getAllTestFiles(".", files);
+		for_each(string_vector, files, f)
+		{
+			string res = DecodeFile(&parser, log, f->c_str());
+			printf("File: %s, decoded: %s\n", f->c_str(), res.c_str());
+		}
+		return;
 	}
-	return;
-	*/
 
 	while (**test)
 	{
@@ -170,7 +171,7 @@ void RfParserTest()
 		{
 		}
 
-		string res = DecodeFile(&parser, log, (string("testfiles/")+(*test)[0]).c_str());
+		string res = DecodeFile(&parser, log, (string("tests/testfiles/")+(*test)[0]).c_str());
 		if (res != (*test)[1])
 		{
 			printf("Failed! File:%s, result:%s, Expected: %s\n", (*test)[0], res.c_str(), (*test)[1]); 
