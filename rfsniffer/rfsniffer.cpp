@@ -420,7 +420,9 @@ int main(int argc, char* argv[])
 					m_Log->Printf(3, "Saved file RSSI=%d (%d)", lastRSSI, minGoodRSSI);
 				}
 
+				rfm.receiveEnd();
 				string parsedResult = m_parser.Parse(data, data_ptr - data);
+			    rfm.receiveBegin();
 				if (parsedResult.length())
 				{
 					m_Log->Printf(3, "RF Recieved: %s. RSSI=%d (%d)", parsedResult.c_str(), lastRSSI, minGoodRSSI);

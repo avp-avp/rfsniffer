@@ -59,10 +59,14 @@ static const pstr_pair Tests[] = {
 	
 
 	
+	{ "capture-2708-132748.rcf", "X10:D2ON" },
+	{ "capture-2708-132756.rcf", "X10:D2ON" },
+	{ "capture-2708-132933.rcf", "X10:D2ON" },
+
 	//*
-	{ "capture-1303-212826.rcf", "X10:D2ON" },
-	{ "capture-1303-204025.rcf", "X10:D2ON" },
-	{ "capture-2902-213735.rcf", "X10:D2ON" },
+	{ "capture-1303-212826.rcf", "" }, // Inverted X10:D2ON" },
+	{ "capture-1303-204025.rcf", "" }, // Inverted X10:D2ON" },
+	{ "capture-2902-213735.rcf", "" }, // Inverted X10:D2ON" },
 	//{ "capture-2902-214441.rcf", "Livolo:00110011110100010001000" }, FAILED INVERTED
 	//*
 	{ "capture-1304-214720.rcf", "Livolo:00110011110100010001000" },
@@ -79,11 +83,11 @@ static const pstr_pair Tests[] = {
 	{ "capture-0604-212552.rcf", "Livolo:00110011110100010001000" },
 	//* /
 
-	{ "capture-1604-081847.rcf", "Raex:111110000011110111111000001000000011111111111111111111111" },
-	{ "capture-1604-080728.rcf", "Raex:111110000011110111111000001000000011111111111111111111111" },
-	{ "capture-1404-083759.rcf", "Raex:111110000011110111111000001000000011111111111111111111111" },
-	{ "capture-1404-083803.rcf", "Raex:111110000011110111111000001000000011111111111111111111111" },
-	{ "capture-1404-083811.rcf", "Raex:100001000011110111111000010000000011111111111111111111111" },
+	{ "capture-1604-081847.rcf", "Raex:raw=F07BF0407FFFFF ch=F0 btn=1" },
+	{ "capture-1604-080728.rcf", "Raex:raw=F07BF0407FFFFF ch=F0 btn=1" },
+	{ "capture-1404-083759.rcf", "Raex:raw=F07BF0407FFFFF ch=F0 btn=1" },
+	{ "capture-1404-083803.rcf", "Raex:raw=F07BF0407FFFFF ch=F0 btn=1" },
+	{ "capture-1404-083811.rcf", "Raex:raw=087BF0807FFFFF ch=08 btn=2" },
 
 //File: capture-1408-204138.rcf, decoded: RST:id=1b00 h=46 t=14.1
 		{ "capture-1408-204138.rcf", "RST:id=1b00 h=46 t=14.1" },
@@ -98,7 +102,7 @@ static const pstr_pair Tests[] = {
 		{ "capture-1004-121901.rcf", ""}, //RST:id=1b10 h=34 t=27.2"},
 	
 		{"capture-1004-122939.rcf", ""},  //FAILED
-		{"capture-1004-125748.rcf","X10:D2OFF" },
+		{"capture-1004-125748.rcf","" }, // Inverted X10:D2ON" },X10:D2OFF" },
 
 		//*/
 	NULL
@@ -131,6 +135,7 @@ void getAllTestFiles( string path, string_vector &result )
 
 void RfParserTest(string path)
 {
+	bool allPassed = true;
 	CLog *log = CLog::GetLog("Main");
 	CRFParser parser(log);
 	//parser.EnableAnalyzer();
@@ -175,6 +180,7 @@ void RfParserTest(string path)
 		if (res != (*test)[1])
 		{
 			printf("Failed! File:%s, result:%s, Expected: %s\n", (*test)[0], res.c_str(), (*test)[1]); 
+			allPassed = false;
 		}
 
 		test++;
@@ -193,4 +199,7 @@ void RfParserTest(string path)
 	string result = parser.Parse(data, dataSize);
 
 	printf("Parser result:%s\n", result.c_str());*/
+
+	if (!allPassed)
+		    exit(1);
 }
