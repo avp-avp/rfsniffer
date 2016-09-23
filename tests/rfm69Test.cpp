@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "../libs/libutils/logging.h"
-#include "../libs/libutils/Thread.h"
+#include "../libs/libutils/thread.h"
 #include "../libs/libutils/Exception.h"
 #include "../libs/librf/spidev_lib++.h"
 #include "../libs/librf/RFM69OOKregisters.h"
