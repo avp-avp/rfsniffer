@@ -253,7 +253,7 @@ void CMqttConnection::NewMessage(string message)
 		dev->set("Command", value);
 		m_Log->Printf(3, "Msg from X10 %s", message.c_str());
 	}
-	else if (type=="Raex" || type=="Livolo")
+	else if (type=="Raex" || type=="Livolo" || type=="Rubitek" )
 	{
 		CWBDevice *dev = m_Devices["Remotes"];
 		if (!dev)
@@ -261,6 +261,7 @@ void CMqttConnection::NewMessage(string message)
 			dev = new CWBDevice("Remotes", "RF Remote controls");
 			dev->AddControl("Raex", CWBControl::Text, true);
 			dev->AddControl("Livolo", CWBControl::Text, true);
+			dev->AddControl("Rubitek", CWBControl::Text, true);
 			//dev->AddControl("Raw", CWBControl::Text, true);
 			CreateDevice(dev);
 		}

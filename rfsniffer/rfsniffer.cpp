@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
 	int rssi = 0;
 	int writePackets=0;
 	string savePath = ".";
+	bool inverted = false;
 
 
 	char* irq = getenv("WB_GPIO_RFM_IRQ");
@@ -99,7 +100,7 @@ int main(int argc, char* argv[])
     //~ int digit_optind = 0;
     //~ int aopt = 0, bopt = 0;
     //~ char *copt = 0, *dopt = 0;
-    while ( (c = getopt(argc, argv, "Dds:m:l:S:f:r:tw:c:")) != -1) {
+    while ( (c = getopt(argc, argv, "Dds:m:l:S:f:r:tw:c:i")) != -1) {
         //~ int this_option_optind = optind ? optind : 1;
         switch (c) {
     	case 'D':
@@ -120,6 +121,10 @@ int main(int argc, char* argv[])
 
          case 'm':
          	mqttHost = optarg;
+         	break;
+
+         case 'i':
+         	inverted = true;
          	break;
 
          case 'S':
