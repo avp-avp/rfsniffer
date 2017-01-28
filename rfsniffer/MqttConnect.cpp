@@ -34,6 +34,8 @@ void CMqttConnection::on_connect(int rc)
 	subscribe(NULL, "/devices/noolite_tx_0xd61/controls/#");
 	subscribe(NULL, "/devices/noolite_tx_0xd62/controls/#");
 	subscribe(NULL, "/devices/noolite_tx_0xd63/controls/#");
+	subscribe(NULL, "/devices/noolite_tx_0xd64/controls/#");
+	subscribe(NULL, "/devices/X10/controls/#");
 }
 
 void CMqttConnection::on_disconnect(int rc)
@@ -60,51 +62,58 @@ void CMqttConnection::on_message(const struct mosquitto_message *message)
 		if (v[5]!="on")
 			return;
 
-		string addr = v[2];
-		size_t pos = addr.find("0x");
-		if (pos==string::npos || pos>addr.length()-2)
-			return;
-		addr = addr.substr(pos+2);
+		string device = v[2];
 
-		string control = v[4];
-
-		m_Log->Printf(1, "%s control %s set to %s", addr.c_str(), control.c_str(), message->payload);
-		uint8_t cmd=4;
-		string extra;
-
-		if (control=="state")
-			cmd = atoi((char*)message->payload)?2:0;
-		else if (control=="level")
+		if (device.substr(0, 11)== "noolite_tx_")
 		{
-			cmd = 6;
-			extra=string(" level=")+(char*)message->payload;
-		}
-		else if (control=="color")
-		{
-			cmd = 6;
-			string_vector v;
-			SplitString((char*)message->payload, ';', v);
-			if (v.size()==3)
-			{
-				extra+=" fmt=3 r="+v[0]+" g="+v[1]+" b="+v[2];
-			}
-		}
-
-		else 
-		{
-			cmd = m_nooLite.getCommand(control);
-			if (cmd==CRFProtocolNooLite::nlcmd_error)
+			size_t pos = device.find("0x");
+			if (pos==string::npos || pos>device.length()-2)
 				return;
+			string addr = device.substr(pos+2);
+
+			string control = v[4];
+
+			m_Log->Printf(1, "%s control %s set to %s", addr.c_str(), control.c_str(), message->payload);
+			uint8_t cmd=4;
+			string extra;
+
+			if (control=="state")
+				cmd = atoi((char*)message->payload)?2:0;
+			else if (control=="level")
+			{
+				cmd = 6;
+				extra=string(" level=")+(char*)message->payload;
+			}
+			else if (control=="color")
+			{
+				cmd = 6;
+				string_vector v;
+				SplitString((char*)message->payload, ';', v);
+				if (v.size()==3)
+				{
+					extra+=" fmt=3 r="+v[0]+" g="+v[1]+" b="+v[2];
+				}
+			}
+
+			else 
+			{
+				cmd = m_nooLite.getCommand(control);
+				if (cmd==CRFProtocolNooLite::nlcmd_error)
+					return;
+			}
+
+
+			static uint8_t buffer[100];
+			size_t bufferSize=sizeof(buffer);
+			string command = "nooLite:cmd="+itoa(cmd)+" addr="+addr+extra;
+			m_Log->Printf(1, "%s", command.c_str());
+			m_nooLite.EncodeData(command, 2000, buffer, bufferSize);
+			m_RFM->send(buffer, bufferSize);
+			m_RFM->receiveBegin();
+		} else if (device=="X10")
+		{
+
 		}
-
-
-		static uint8_t buffer[100];
-		size_t bufferSize=sizeof(buffer);
-		string command = "nooLite:cmd="+itoa(cmd)+" addr="+addr+extra;
-		m_Log->Printf(1, "%s", command.c_str());
-		m_nooLite.EncodeData(command, 2000, buffer, bufferSize);
-		m_RFM->send(buffer, bufferSize);
-		m_RFM->receiveBegin();
 	} 
 	catch (CHaException ex)
 	{
@@ -150,8 +159,8 @@ void CMqttConnection::NewMessage(string message)
 		{
 			string desc = string("RST sensor ")+id;
 			dev = new CWBDevice(name, desc);
-			dev->AddControl("Temperature", CWBControl::Temperature, true);
-			dev->AddControl("Humidity", CWBControl::RelativeHumidity, true);
+			dev->addControl("Temperature", CWBControl::Temperature, true);
+			dev->addControl("Humidity", CWBControl::RelativeHumidity, true);
 			CreateDevice(dev);
 		}
 
@@ -176,10 +185,10 @@ void CMqttConnection::NewMessage(string message)
 			{
 				string desc = string("Noolite Sensor 0x")+id;
 				dev = new CWBDevice(name, desc);
-				dev->AddControl("temperature", CWBControl::Temperature, true);
+				dev->addControl("temperature", CWBControl::Temperature, true);
 
 				if (h.length()>0)
-					dev->AddControl("humidity", CWBControl::RelativeHumidity, true);
+					dev->addControl("humidity", CWBControl::RelativeHumidity, true);
 			
 				CreateDevice(dev);
 			}
@@ -195,7 +204,7 @@ void CMqttConnection::NewMessage(string message)
 			{
 				string desc = string("Noolite Sensor 0x")+id;
 				dev = new CWBDevice(name, desc);
-				dev->AddControl("state", CWBControl::Switch, true);
+				dev->addControl("state", CWBControl::Switch, true);
 			
 				CreateDevice(dev);
 			}
@@ -225,11 +234,11 @@ void CMqttConnection::NewMessage(string message)
 		if (!dev)
 		{
 			string desc = string("Oregon sensor [")+sensorType+"] ("+id+"-"+ch+")";
-			dev = new CWBDevice(name, desc);
-			dev->AddControl("temperature", CWBControl::Temperature, true);
+			m_Devices[name] = dev = new CWBDevice(name, desc);
+			dev->addControl("temperature", CWBControl::Temperature, true);
 
 			if (h.length()>0)
-				dev->AddControl("humidity", CWBControl::RelativeHumidity, true);
+				dev->addControl("humidity", CWBControl::RelativeHumidity, true);
 		
 			CreateDevice(dev);
 		}
@@ -245,23 +254,46 @@ void CMqttConnection::NewMessage(string message)
 		CWBDevice *dev = m_Devices["X10"];
 		if (!dev)
 		{
-			dev = new CWBDevice("X10", "X10");
-			dev->AddControl("Command", CWBControl::Text, true);
+			m_Devices["X10"] = dev = new CWBDevice("X10", "X10");
+			dev->addControl("Command", CWBControl::Text, true);
 			CreateDevice(dev);
 		}
 
 		dev->set("Command", value);
 		m_Log->Printf(3, "Msg from X10 %s", message.c_str());
 	}
+	else if (type=="Livolo")
+	{
+		string_map values;
+		SplitValues(value, values);
+		string addr=values["addr"], cmd=values["cmd"];
+
+		CWBDevice *dev = m_Devices["Livolo"];
+		if (!dev)
+		{
+			m_Devices["Livolo"] = dev = new CWBDevice("Livolo"+addr, "Livolo "+addr);
+			CreateDevice(dev);
+		}
+
+		if (!dev->controlExists(cmd))
+		{
+			dev->addControl(cmd, CWBControl::Switch, true);
+			CreateDevice(dev);
+		}
+
+		//dev->set(cmd, "1");
+		dev->set(cmd, dev->getI(cmd)>0 ? "0" : "1");
+		m_Log->Printf(3, "Msg from Livolo %s. Set %s to %d", message.c_str(), cmd.c_str(), dev->getI(cmd));
+	}
 	else if (type=="Raex" || type=="Livolo" || type=="Rubitek" )
 	{
 		CWBDevice *dev = m_Devices["Remotes"];
 		if (!dev)
 		{
-			dev = new CWBDevice("Remotes", "RF Remote controls");
-			dev->AddControl("Raex", CWBControl::Text, true);
-			dev->AddControl("Livolo", CWBControl::Text, true);
-			dev->AddControl("Rubitek", CWBControl::Text, true);
+			m_Devices["Remotes"] = dev = new CWBDevice("Remotes", "RF Remote controls");
+			dev->addControl("Raex", CWBControl::Text, true);
+			//dev->AddControl("Livolo", CWBControl::Text, true);
+			dev->addControl("Rubitek", CWBControl::Text, true);
 			//dev->AddControl("Raw", CWBControl::Text, true);
 			CreateDevice(dev);
 		}
@@ -280,7 +312,7 @@ void CMqttConnection::SendUpdate()
 	for_each(CWBDeviceMap, m_Devices, dev)
 	{
 		if (dev->second)
-			dev->second->UpdateValues(v);
+			dev->second->updateValues(v);
 	}
 
 	for_each(string_map, v, i)
@@ -294,7 +326,7 @@ void CMqttConnection::CreateDevice(CWBDevice* dev)
 {
 	m_Devices[dev->getName()] = dev;
 	string_map v;
-	dev->CreateDeviceValues(v);
+	dev->createDeviceValues(v);
 	for_each(string_map, v, i)
 	{
 		publish(NULL, i->first.c_str(), i->second.size(), i->second.c_str(), 0, true);

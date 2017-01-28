@@ -106,11 +106,11 @@ void TestMqttConnection::Test()
 
 
 	CWBDevice wbdev("TestDev", "Тестовое устройство");
-	wbdev.AddControl("Time", CWBControl::Text, true);
-	wbdev.AddControl("Random", CWBControl::Temperature, true);
+	wbdev.addControl("Time", CWBControl::Text, true);
+	wbdev.addControl("Random", CWBControl::Temperature, true);
 	string_map v;
 	
-	wbdev.CreateDeviceValues(v);
+	wbdev.createDeviceValues(v);
 	m_Log->Printf(1, "Create test device");
 
 	for_each(string_map, v, i)
@@ -129,7 +129,7 @@ void TestMqttConnection::Test()
 	wbdev.set("Random", rand()*0.01);
 
 	v.clear();
-	wbdev.UpdateValues(v);
+	wbdev.updateValues(v);
 	m_Log->Printf(1, "Update test device");
 
 	for_each(string_map, v, i)

@@ -7,6 +7,7 @@
 #include "../libs/librf/RFM69OOKregisters.h"
 #include "../libs/librf/RFM69OOK.h"
 #include "../libs/librf/RFProtocolNooLite.h"
+#include "../libs/librf/RFProtocolLivolo.h"
 
 void dumpRegs(RFM69OOK *rfm)
 {
@@ -45,7 +46,8 @@ void Rfm69Test()
 
   try
   {
-    printf("mySPI->begin()\n");
+    CLog *log = CLog::Default();
+    log->Printf(0, "mySPI->begin()\n");
 
   	/*
     memset(tx_buffer,0,32);
@@ -64,11 +66,11 @@ void Rfm69Test()
     //writeReg(REG_OPMODE, (readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_STANDBY);
 
     RFM69OOK rfm(&mySPI, 38);
-    printf("Reg REG_OPMODE = %x\n", rfm.readReg(REG_OPMODE));
-    printf("Reg REG_IRQFLAGS1 = %x\n", rfm.readReg(REG_IRQFLAGS1));
+    log->Printf(0, "Reg REG_OPMODE = %x\n", rfm.readReg(REG_OPMODE));
+    log->Printf(0, "Reg REG_IRQFLAGS1 = %x\n", rfm.readReg(REG_IRQFLAGS1));
     rfm.writeReg(REG_OPMODE, (rfm.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP);
-    printf("Reg REG_OPMODE = %x\n", rfm.readReg(REG_OPMODE));
-    printf("Bitrate = %ld\n", rfm.getBitrate());
+    log->Printf(0, "Reg REG_OPMODE = %x\n", rfm.readReg(REG_OPMODE));
+    log->Printf(0, "Bitrate = %ld\n", rfm.getBitrate());
 
     rfm.initialize();
 
@@ -81,10 +83,32 @@ void Rfm69Test()
     rfm.receiveBegin();
 
     CRFProtocolNooLite nooLite;
+    CRFProtocolLivolo livolo;
+
+    rfm.setBitrate(10000);
+    while (1)
+    {
+      //*
+      uint8_t buffer[10000];
+      size_t bufferSize=sizeof(buffer);
+      log->Printf(0, "\nP1\n");
+      livolo.EncodeData("Livolo:addr=33d1 cmd=8", 10000, buffer, bufferSize);
+      log->Printf(0, "\nP2\nSize=%d\t", bufferSize);
+      log->Printf(0, "Bitrate = %ld\n", rfm.getBitrate());
+      
+      for (int i=0;i<20;i++)
+        rfm.send(buffer, bufferSize);
+      
+      log->Printf(0, "Send finished\n");
+     
+      rfm.receiveBegin();
+
+      Sleep(10000);
+    }
 
 //11001011001000010110010000000001101110
 //10001011001000010110010000000001010110
-    while (1)
+    while (0)
     {
       //*
       uint8_t buffer[100];

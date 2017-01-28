@@ -5,13 +5,14 @@
 
 void LogTest();
 void RfParserTest(string path);
+void RfEncodeTest();
 void Rfm69Test();
 void SnifferTest();
 void MqttTest();
 
 int main(int argc, char* argv[])
 {
-	bool bTestLog = true, bTestParser = true, bTestRfm = false, bTestSniffer = false, bTestMqtt = false;
+	bool bTestLog = true, bTestParser = true, bTestRfm = false, bTestSniffer = false, bTestMqtt = false, bTestEncode=true;
 	string path;
 
 	if (argc>1)
@@ -21,7 +22,7 @@ int main(int argc, char* argv[])
     //~ int digit_optind = 0;
     //~ int aopt = 0, bopt = 0;
     //~ char *copt = 0, *dopt = 0;
-    while ( (c = getopt(argc, argv, "alprsmf:")) != -1) {
+    while ( (c = getopt(argc, argv, "alprsmef:")) != -1) {
         //~ int this_option_optind = optind ? optind : 1;
         switch (c) {
     	case 'a':
@@ -35,6 +36,9 @@ int main(int argc, char* argv[])
             break;
   		case 'r':
 	 		bTestRfm = true;
+            break;
+  		case 'e':
+	 		bTestEncode = true;
             break;
  		case 's':
 	 		bTestSniffer = true;
@@ -63,6 +67,9 @@ int main(int argc, char* argv[])
 	
 	if (bTestRfm)
 		Rfm69Test();
+
+	if (bTestEncode)
+		RfEncodeTest();
 
 	if (bTestSniffer)
 		SnifferTest();
