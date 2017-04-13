@@ -262,16 +262,16 @@ void CMqttConnection::NewMessage(string message)
 		dev->set("Command", value);
 		m_Log->Printf(3, "Msg from X10 %s", message.c_str());
 	}
-	else if (type=="Livolo")
+	else if (type=="Livolo" || type=="VHome")
 	{
 		string_map values;
 		SplitValues(value, values);
 		string addr=values["addr"], cmd=values["cmd"];
 
-		CWBDevice *dev = m_Devices["Livolo"];
+		CWBDevice *dev = m_Devices[type+addr];
 		if (!dev)
 		{
-			m_Devices["Livolo"] = dev = new CWBDevice("Livolo"+addr, "Livolo "+addr);
+			m_Devices[type] = dev = new CWBDevice(type+addr, type+" "+addr);
 			CreateDevice(dev);
 		}
 
@@ -283,15 +283,16 @@ void CMqttConnection::NewMessage(string message)
 
 		//dev->set(cmd, "1");
 		dev->set(cmd, dev->getI(cmd)>0 ? "0" : "1");
-		m_Log->Printf(3, "Msg from Livolo %s. Set %s to %d", message.c_str(), cmd.c_str(), dev->getI(cmd));
+		m_Log->Printf(3, "Msg from %s %s. Set %s to %d", type.c_str(), message.c_str(), cmd.c_str(), dev->getI(cmd));
 	}
-	else if (type=="Raex" || type=="Livolo" || type=="Rubitek" )
+	else if (type=="Raex" || type=="Rubitek" )
 	{
 		CWBDevice *dev = m_Devices["Remotes"];
 		if (!dev)
 		{
 			m_Devices["Remotes"] = dev = new CWBDevice("Remotes", "RF Remote controls");
 			dev->addControl("Raex", CWBControl::Text, true);
+			//dev->addControl("VHome", CWBControl::Text, true);
 			//dev->AddControl("Livolo", CWBControl::Text, true);
 			dev->addControl("Rubitek", CWBControl::Text, true);
 			//dev->AddControl("Raw", CWBControl::Text, true);
